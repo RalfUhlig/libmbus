@@ -476,6 +476,24 @@ char * mbus_data_variable_xml_normalized(mbus_data_variable *data);
 char * mbus_frame_data_xml_normalized(mbus_frame_data *data);
 
 /**
+ * Generate JSON for normalized variable-length data
+ *
+ * @param data    variable-length data
+ *
+ * @return string with JSON
+ */
+char * mbus_data_variable_json_normalized(mbus_data_variable *data);
+
+/**
+ * Return a string containing an JSON representation of the normalized M-BUS frame data.
+ *
+ * @param data    M-Bus frame data
+ *
+ * @return string with JSON
+ */
+char * mbus_frame_data_json_normalized(mbus_frame_data *data);
+
+/**
  * Iterate over secondary addresses, send a probe package to all addresses matching
  * the given addresses mask.
  *

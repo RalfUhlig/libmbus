@@ -1496,6 +1496,130 @@ mbus_frame_data_xml_normalized(mbus_frame_data *data)
     return NULL;
 }
 
+//------------------------------------------------------------------------------
+/// Generate JSON for variable-length data
+//------------------------------------------------------------------------------
+char *
+mbus_data_variable_json_normalized(mbus_data_variable *data)
+{
+    mbus_data_record *record;
+    mbus_record *norm_record;
+    char *buff = NULL, *new_buff = NULL;
+    char str_encoded[768] = "";
+    size_t len = 0, buff_size = 8192;
+    size_t i;
+
+    if (data)
+    {
+        buff = (char*) malloc(buff_size);
+
+        if (buff == NULL)
+            return NULL;
+
+        len += snprintf(&buff[len], buff_size - len, MBUS_JSON_PROCESSING_INSTRUCTION);
+
+        len += snprintf(&buff[len], buff_size - len, "{\"MBusData\": {");
+
+        len += snprintf(&buff[len], buff_size - len, "%s", mbus_data_variable_header_json(&(data->header)));
+
+        len += snprintf(&buff[len], buff_size - len, ", \"DataRecord\": [");
+        for (record = data->record, i = 0; record; record = record->next, i++)
+        {
+            norm_record = mbus_parse_variable_record(record);
+
+            if ((buff_size - len) < 1024)
+            {
+                buff_size *= 2;
+                new_buff = (char*) realloc(buff,buff_size);
+
+                if (new_buff == NULL)
+                {
+                    mbus_record_free(norm_record);
+                    free(buff);
+                    return NULL;
+                }
+
+                buff = new_buff;
+            }
+
+            if (i > 0)
+            {
+                len += snprintf(&buff[len], buff_size - len, ", ");
+            }
+
+            len += snprintf(&buff[len], buff_size - len, "{\"id\": %zu", i);
+
+            if (norm_record != NULL)
+            {
+                mbus_str_json_encode(str_encoded, norm_record->function_medium, sizeof(str_encoded));
+                len += snprintf(&buff[len], buff_size - len, ", \"Function\": \"%s\"", str_encoded);
+
+                len += snprintf(&buff[len], buff_size - len, ", \"StorageNumber\": %ld", norm_record->storage_number);
+
+                if (norm_record->tariff >= 0)
+                {
+                    len += snprintf(&buff[len], buff_size - len, ", \"Tariff\": %ld", norm_record->tariff);
+                    len += snprintf(&buff[len], buff_size - len, ", \"Device\": %d", norm_record->device);
+                }
+
+                mbus_str_json_encode(str_encoded, norm_record->unit, sizeof(str_encoded));
+
+                len += snprintf(&buff[len], buff_size - len, ", \"Unit\": \"%s\"", str_encoded);
+
+                mbus_str_json_encode(str_encoded, norm_record->quantity, sizeof(str_encoded));
+                len += snprintf(&buff[len], buff_size - len, ", \"Quantity\": \"%s\"", str_encoded);
+
+
+                if (norm_record->is_numeric)
+                {
+                    len += snprintf(&buff[len], buff_size - len, ", \"Value\": %f", norm_record->value.real_val);
+                }
+                else
+                {
+                    mbus_str_json_encode(str_encoded, norm_record->value.str_val.value, sizeof(str_encoded));
+                    len += snprintf(&buff[len], buff_size - len, ", \"Value\": \"%s\"", str_encoded);
+                }
+
+                mbus_record_free(norm_record);
+            }
+            else
+            {
+            }
+
+            len += snprintf(&buff[len], buff_size - len, "}");
+        }
+
+        len += snprintf(&buff[len], buff_size - len, "]}}");
+
+        return buff;
+    }
+
+    return NULL;
+}
+
+//------------------------------------------------------------------------------
+/// Return a string containing an JSON representation of the M-BUS frame data.
+//------------------------------------------------------------------------------
+char *
+mbus_frame_data_json_normalized(mbus_frame_data *data)
+{
+    if (data)
+    {
+        if (data->type == MBUS_DATA_TYPE_FIXED)
+        {
+            return mbus_data_fixed_json(&(data->data_fix));
+        }
+
+        if (data->type == MBUS_DATA_TYPE_VARIABLE)
+        {
+            return mbus_data_variable_json_normalized(&(data->data_var));
+        }
+    }
+
+    return NULL;
+}
+
+
 mbus_handle *
 mbus_context_serial(const char *device)
 {

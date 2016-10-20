@@ -502,6 +502,9 @@ unsigned int mbus_manufacturer_id(char *manufacturer);
 // it is useful to attach the appropriate code page for postprocessing.
 #define MBUS_XML_PROCESSING_INSTRUCTION         "<?xml version=\"1.0\" encoding=\"ISO-8859-1\"?>\n"
 
+// JSON files do not have any header. But it might be useful to have one.
+#define MBUS_JSON_PROCESSING_INSTRUCTION         ""
+
 //
 // Event callback functions
 //
@@ -579,6 +582,20 @@ char *mbus_frame_data_xml(mbus_frame_data *data);
 char *mbus_data_variable_header_xml(mbus_data_variable_header *header);
 
 char *mbus_frame_xml(mbus_frame *frame);
+
+//
+// JSON generating functions
+//
+int   mbus_str_json_encode(unsigned char *dst, const unsigned char *src, size_t max_len);
+char *mbus_data_json(mbus_frame_data *data);
+char *mbus_data_variable_json(mbus_data_variable *data);
+char *mbus_data_fixed_json(mbus_data_fixed *data);
+char *mbus_data_error_json(int error);
+char *mbus_frame_data_json(mbus_frame_data *data);
+
+char *mbus_data_variable_header_json(mbus_data_variable_header *header);
+
+char *mbus_frame_json(mbus_frame *frame);
 
 //
 // Debug/dump
