@@ -54,42 +54,46 @@ main(int argc, char **argv)
     mbus_frame_data reply_data;
     mbus_handle *handle = NULL;
 
-    char *device, *addr_str, *xml_result;
+    char *device = NULL, *addr_str = NULL, *xml_result, *json_result;
     int address;
     long baudrate = 9600;
+    int json = 0;
+    size_t i;
 
     memset((void *)&reply, 0, sizeof(mbus_frame));
     memset((void *)&reply_data, 0, sizeof(mbus_frame_data));
 
-    if (argc == 3)
+    for (i = 1; i < argc; i++)
     {
-        device   = argv[1];
-        addr_str = argv[2];
+        if (strcmp(argv[i], "-d") == 0)
+        {
+            debug = 1;
+        }
+        else if (strcmp(argv[i], "-b") == 0 && i < argc - 1)
+        {
+            i++;
+            baudrate = atol(argv[i]);
+        }
+        else if (strcmp(argv[i], "-j") == 0)
+        {
+            json = 1;
+        }
+        else if (device == NULL)
+        {
+            device = argv[i];
+        }
+        else if (addr_str == NULL)
+        {
+            addr_str = argv[i];
+        }
     }
-    else if (argc == 4 && strcmp(argv[1], "-d") == 0)
+
+    if (device == NULL || addr_str == NULL)
     {
-        device   = argv[2];
-        addr_str = argv[3];
-        debug = 1;
-    }
-    else if (argc == 5 && strcmp(argv[1], "-b") == 0)
-    {
-        baudrate = atol(argv[2]);
-        device   = argv[3];
-        addr_str = argv[4];
-    }
-    else if (argc == 6 && strcmp(argv[1], "-d") == 0 && strcmp(argv[2], "-b") == 0)
-    {
-        baudrate = atol(argv[3]);
-        device   = argv[4];
-        addr_str = argv[5];
-        debug = 1;
-    }
-    else
-    {
-        fprintf(stderr, "usage: %s [-d] [-b BAUDRATE] device mbus-address\n", argv[0]);
+        fprintf(stderr, "usage: %s [-d] [-b BAUDRATE] [-j] device mbus-address\n", argv[0]);
         fprintf(stderr, "    optional flag -d for debug printout\n");
         fprintf(stderr, "    optional flag -b for selecting baudrate\n");
+        fprintf(stderr, "    optional flag -j for json output\n");
         return 0;
     }
 
@@ -199,19 +203,38 @@ main(int argc, char **argv)
         return 1;
     }
 
-    //
-    // generate XML and print to standard output
-    //
-    if ((xml_result = mbus_frame_data_xml(&reply_data)) == NULL)
+    if (json)
     {
-        fprintf(stderr, "Failed to generate XML representation of MBUS frame: %s\n", mbus_error_str());
-        mbus_disconnect(handle);
-        mbus_context_free(handle);
-        return 1;
-    }
+        //
+        // generate JSON and print to standard output
+        //
+        if ((json_result = mbus_frame_data_json(&reply_data)) == NULL)
+        {
+            fprintf(stderr, "Failed to generate JSON representation of MBUS frame: %s\n", mbus_error_str());
+            mbus_disconnect(handle);
+            mbus_context_free(handle);
+            return 1;
+        }
 
-    printf("%s", xml_result);
-    free(xml_result);
+        printf("%s", json_result);
+        free(json_result);
+    }
+    else
+    {
+        //
+        // generate XML and print to standard output
+        //
+        if ((xml_result = mbus_frame_data_xml(&reply_data)) == NULL)
+        {
+            fprintf(stderr, "Failed to generate XML representation of MBUS frame: %s\n", mbus_error_str());
+            mbus_disconnect(handle);
+            mbus_context_free(handle);
+            return 1;
+        }
+
+        printf("%s", xml_result);
+        free(xml_result);
+    }
 
     // manual free
     if (reply_data.data_var.record)

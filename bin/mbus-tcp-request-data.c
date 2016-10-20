@@ -25,31 +25,44 @@ main(int argc, char **argv)
     mbus_frame_data reply_data;
     mbus_handle *handle = NULL;
 
-    char *host, *addr_str, matching_addr[16], *xml_result;
+    char *host = NULL, *addr_str = NULL, matching_addr[16], *xml_result, *json_result;
     int address;
-    long port;
+    long port = 0;
+    int json = 0;
+    size_t i = 0;
 
     memset((void *)&reply, 0, sizeof(mbus_frame));
     memset((void *)&reply_data, 0, sizeof(mbus_frame_data));
 
-    if (argc == 4)
+    for (i = 1; i < argc; i++)
     {
-        host = argv[1];
-        port = atol(argv[2]);
-        addr_str = argv[3];
-        debug = 0;
+        if (strcmp(argv[i], "-d") == 0)
+        {
+            debug = 1;
+        }
+        else if (strcmp(argv[i], "-j") == 0)
+        {
+            json = 1;
+        }
+        else if (host == NULL)
+        {
+            host = argv[i];
+        }
+        else if (port == 0)
+        {
+            port = atol(argv[i]);
+        }
+        else if (addr_str == NULL)
+        {
+            addr_str = argv[i];
+        }
     }
-    else if (argc == 5 && strcmp(argv[1], "-d") == 0)
+
+    if (host == NULL || port == 0 || addr_str == NULL)
     {
-        host = argv[2];
-        port = atol(argv[3]);
-        addr_str = argv[4];
-        debug = 1;
-    }
-    else
-    {
-        fprintf(stderr, "usage: %s [-d] host port mbus-address\n", argv[0]);
+        fprintf(stderr, "usage: %s [-d] [-j] host port mbus-address\n", argv[0]);
         fprintf(stderr, "    optional flag -d for debug printout\n");
+        fprintf(stderr, "    optional flag -j for json output\n");
         return 0;
     }
 
@@ -127,7 +140,7 @@ main(int argc, char **argv)
     }
 
     //
-    // parse data and print in XML format
+    // parse data and print in XML or JSON format
     //
     if (debug)
     {
@@ -140,14 +153,28 @@ main(int argc, char **argv)
         return 1;
     }
 
-    if ((xml_result = mbus_frame_data_xml(&reply_data)) == NULL)
+    if (json)
     {
-        fprintf(stderr, "Failed to generate XML representation of MBUS frame: %s\n", mbus_error_str());
-        return 1;
-    }
+        if ((json_result = mbus_frame_data_json(&reply_data)) == NULL)
+        {
+            fprintf(stderr, "Failed to generate JSON representation of MBUS frame: %s\n", mbus_error_str());
+            return 1;
+        }
 
-    printf("%s", xml_result);
-    free(xml_result);
+        printf("%s", json_result);
+        free(json_result);
+    }
+    else
+    {
+        if ((xml_result = mbus_frame_data_xml(&reply_data)) == NULL)
+        {
+            fprintf(stderr, "Failed to generate XML representation of MBUS frame: %s\n", mbus_error_str());
+            return 1;
+        }
+
+        printf("%s", xml_result);
+        free(xml_result);
+    }
 
     // manual free
     if (reply_data.data_var.record)

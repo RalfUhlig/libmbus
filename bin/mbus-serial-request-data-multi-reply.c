@@ -52,10 +52,11 @@ init_slaves(mbus_handle *handle)
 static void
 parse_abort(char **argv)
 {
-    fprintf(stderr, "usage: %s [-d] [-b BAUDRATE] [-f FRAMES] device mbus-address\n", argv[0]);
+    fprintf(stderr, "usage: %s [-d] [-b BAUDRATE] [-f FRAMES] [-j] device mbus-address\n", argv[0]);
     fprintf(stderr, "    optional flag -d for debug printout\n");
     fprintf(stderr, "    optional flag -b for selecting baudrate\n");
     fprintf(stderr, "    optional flag -f for selecting the maximal number of frames\n");
+    fprintf(stderr, "    optional flag -j for json output\n");
     exit(1);
 }
 
@@ -68,10 +69,11 @@ main(int argc, char **argv)
     mbus_frame reply;
     mbus_handle *handle = NULL;
 
-    char *device, *addr_str, *xml_result;
+    char *device, *addr_str, *xml_result, *json_result;
     int address;
     long baudrate = 9600;
     int maxframes = MAXFRAMES;
+    int json = 0;
 
     memset((void *)&reply, 0, sizeof(mbus_frame));
     int c;
@@ -90,6 +92,10 @@ main(int argc, char **argv)
         {
             c++;
             maxframes = atoi(argv[c]);
+        }
+        else if (strcmp(argv[c], "-j") == 0)
+        {
+            json = 1;
         }
         else
         {
@@ -195,20 +201,40 @@ main(int argc, char **argv)
         mbus_frame_print(&reply);
     }
 
-    //
-    // generate XML and print to standard output
-    //
-    if ((xml_result = mbus_frame_xml(&reply)) == NULL)
+    if (json)
     {
-        fprintf(stderr, "Failed to generate XML representation of MBUS frames: %s\n", mbus_error_str());
-        mbus_disconnect(handle);
-        mbus_context_free(handle);
-        mbus_frame_free(reply.next);
-        return 1;
-    }
+        //
+        // generate JSON and print to standard output
+        //
+        if ((json_result = mbus_frame_json(&reply)) == NULL)
+        {
+            fprintf(stderr, "Failed to generate JSON representation of MBUS frames: %s\n", mbus_error_str());
+            mbus_disconnect(handle);
+            mbus_context_free(handle);
+            mbus_frame_free(reply.next);
+            return 1;
+        }
 
-    printf("%s", xml_result);
-    free(xml_result);
+        printf("%s", json_result);
+        free(json_result);
+    }
+    else
+    {
+        //
+        // generate XML and print to standard output
+        //
+        if ((xml_result = mbus_frame_xml(&reply)) == NULL)
+        {
+            fprintf(stderr, "Failed to generate XML representation of MBUS frames: %s\n", mbus_error_str());
+            mbus_disconnect(handle);
+            mbus_context_free(handle);
+            mbus_frame_free(reply.next);
+            return 1;
+        }
+
+        printf("%s", xml_result);
+        free(xml_result);
+    }
 
     mbus_disconnect(handle);
     mbus_context_free(handle);

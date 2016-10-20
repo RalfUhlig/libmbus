@@ -18,13 +18,12 @@ int
 main(int argc, char *argv[])
 {
     FILE *fp = NULL;
-    size_t buff_len, len;
+    size_t buff_len, len, i;
     int result, normalized = 0, json = 0;
     unsigned char raw_buff[4096], buff[4096];
     mbus_frame reply;
     mbus_frame_data frame_data;
-    char *str_result = NULL, *file = NULL;
-    size_t i;
+    char *xml_result = NULL, *json_result = NULL, *file = NULL;
 
     for (i = 1; i < argc; i++)
     {
@@ -101,27 +100,27 @@ main(int argc, char *argv[])
 
     if (json)
     {
-        str_result = normalized ? mbus_frame_data_json_normalized(&frame_data) : mbus_frame_data_json(&frame_data);
+        json_result = normalized ? mbus_frame_data_json_normalized(&frame_data) : mbus_frame_data_json(&frame_data);
 
-        if (str_result == NULL)
+        if (json_result == NULL)
         {
             fprintf(stderr, "Failed to generate JSON representation of MBUS frame: %s\n", mbus_error_str());
             return 1;
         }
-        printf("%s", str_result);
-        free(str_result);
+        printf("%s", json_result);
+        free(json_result);
     }
     else
     {
-        str_result = normalized ? mbus_frame_data_xml_normalized(&frame_data) : mbus_frame_data_xml(&frame_data);
+        xml_result = normalized ? mbus_frame_data_xml_normalized(&frame_data) : mbus_frame_data_xml(&frame_data);
 
-        if (str_result == NULL)
+        if (xml_result == NULL)
         {
             fprintf(stderr, "Failed to generate XML representation of MBUS frame: %s\n", mbus_error_str());
             return 1;
         }
-        printf("%s", str_result);
-        free(str_result);
+        printf("%s", xml_result);
+        free(xml_result);
     }
 
     mbus_data_record_free(frame_data.data_var.record);
