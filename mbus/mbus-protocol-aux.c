@@ -1518,7 +1518,7 @@ mbus_data_variable_json_normalized(mbus_data_variable *data)
 
         len += snprintf(&buff[len], buff_size - len, MBUS_JSON_PROCESSING_INSTRUCTION);
 
-        len += snprintf(&buff[len], buff_size - len, "{\"MBusData\": {");
+        len += snprintf(&buff[len], buff_size - len, "{");
 
         len += snprintf(&buff[len], buff_size - len, "%s", mbus_data_variable_header_json(&(data->header)));
 
@@ -1589,7 +1589,7 @@ mbus_data_variable_json_normalized(mbus_data_variable *data)
             len += snprintf(&buff[len], buff_size - len, "}");
         }
 
-        len += snprintf(&buff[len], buff_size - len, "]}}");
+        len += snprintf(&buff[len], buff_size - len, "]}");
 
         return buff;
     }
