@@ -115,6 +115,24 @@ mbus_slave_data_get(size_t i)
 }
 
 //------------------------------------------------------------------------------
+/// Return 1 if a string represents a numeric value else 0
+//------------------------------------------------------------------------------
+int
+isnumeric(char const *str)
+{
+    char *endptr;
+
+    strtod(str, &endptr);
+
+    if (*endptr != '\0' || endptr == str)
+    {
+        return 0;
+    }
+
+    return 1;
+}
+
+//------------------------------------------------------------------------------
 //
 // M-Bus FRAME RELATED FUNCTIONS
 //
@@ -4455,7 +4473,15 @@ mbus_data_variable_record_json(mbus_data_record *record, int record_cnt, int fra
         }
 
         mbus_str_json_encode(str_encoded, mbus_data_record_value(record), sizeof(str_encoded));
-        len += snprintf(&buff[len], sizeof(buff) - len, ", \"Value\": \"%s\"", str_encoded);
+
+        if (isnumeric(str_encoded))
+        {
+            len += snprintf(&buff[len], sizeof(buff) - len, ", \"Value\": %s", str_encoded);
+        }
+        else
+        {
+            len += snprintf(&buff[len], sizeof(buff) - len, ", \"Value\": \"%s\"", str_encoded);
+        }
 
         if (record->timestamp > 0)
         {
