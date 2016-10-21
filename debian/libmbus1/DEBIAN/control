@@ -1,0 +1,12 @@
+Package: libmbus1
+Source: libmbus
+Version: 0.8.0
+Architecture: armhf
+Maintainer: Robert Johansson <rob@raditex.nu>
+Installed-Size: 282
+Depends: libc6 (>= 2.4)
+Section: libs
+Priority: extra
+Homepage: http://www.rscada.se/libmbus
+Description: FreeSCADA M-Bus Library.
+ A free and open-source library for M-Bus (Meter Bus) from the rSCADA project.

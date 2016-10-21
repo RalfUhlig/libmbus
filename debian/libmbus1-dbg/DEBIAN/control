@@ -1,0 +1,13 @@
+Package: libmbus1-dbg
+Source: libmbus
+Version: 0.8.0
+Architecture: armhf
+Maintainer: Robert Johansson <rob@raditex.nu>
+Installed-Size: 344
+Depends: libmbus1 (= 0.8.0)
+Section: debug
+Priority: extra
+Homepage: http://www.rscada.se/libmbus
+Description: debugging symbols for libmbus1
+ A free and open-source library for M-Bus (Meter Bus) from the rSCADA project,
+ including debugging symbols.

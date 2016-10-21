@@ -1,0 +1,16 @@
+d5f0779f84b55d248799ff2850442a2a  usr/lib/debug/usr/bin/mbus-serial-request-data
+fb6d55761cded92bb387db6989dcbe56  usr/lib/debug/usr/bin/mbus-serial-request-data-multi-reply
+33cdd85b71c7b4ca7bcbfdbff8a3c3ec  usr/lib/debug/usr/bin/mbus-serial-scan
+6a8eccca4cd9add331be2c4f655869f9  usr/lib/debug/usr/bin/mbus-serial-scan-secondary
+d8d1267cb090619a4b1fb23ca5d38177  usr/lib/debug/usr/bin/mbus-serial-select-secondary
+b24cb7f548ae7d128d8bb80ad7be7192  usr/lib/debug/usr/bin/mbus-serial-switch-baudrate
+8ce9cbcdd916e7afc32e61b19374082d  usr/lib/debug/usr/bin/mbus-tcp-application-reset
+3dd918857715cb2f674fc9e0abada2f8  usr/lib/debug/usr/bin/mbus-tcp-raw-send
+96aa5c27990827cf28366e4ee9308e0a  usr/lib/debug/usr/bin/mbus-tcp-request-data
+12dfd58908c210e7ffd5db1540f396db  usr/lib/debug/usr/bin/mbus-tcp-request-data-multi-reply
+bb08f23d73f6e58b1741de797d46ee93  usr/lib/debug/usr/bin/mbus-tcp-scan
+cc96f2befd547a233beeb4c082d5e935  usr/lib/debug/usr/bin/mbus-tcp-scan-secondary
+dc9a75bcfd44dd1b58ce40bfdbb2c928  usr/lib/debug/usr/bin/mbus-tcp-select-secondary
+a420930be5f4048f11fc83d4befee155  usr/lib/debug/usr/lib/libmbus.so.0.0.8
+c5783b353c15c598b4045e4388484f01  usr/share/doc/libmbus1-dbg/changelog.gz
+52b835c51ae9f15a695b7a5c06e1399c  usr/share/doc/libmbus1-dbg/copyright
