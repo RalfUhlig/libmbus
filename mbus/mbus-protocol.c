@@ -4386,21 +4386,25 @@ mbus_data_variable_header_json(mbus_data_variable_header *header)
 
     if (header)
     {
-        len += snprintf(&buff[len], sizeof(buff) - len, "\"SlaveInformation_Id\": %lld", mbus_data_bcd_decode(header->id_bcd, 4));
-        len += snprintf(&buff[len], sizeof(buff) - len, ", \"SlaveInformation_Manufacturer\": \"%s\"",
+        len += snprintf(&buff[len], sizeof(buff) - len, "\"SlaveInformation\": {");
+
+        len += snprintf(&buff[len], sizeof(buff) - len, "\"Id\": %lld", mbus_data_bcd_decode(header->id_bcd, 4));
+        len += snprintf(&buff[len], sizeof(buff) - len, ", \"Manufacturer\": \"%s\"",
                 mbus_decode_manufacturer(header->manufacturer[0], header->manufacturer[1]));
-        len += snprintf(&buff[len], sizeof(buff) - len, ", \"SlaveInformation_Version\": %d", header->version);
+        len += snprintf(&buff[len], sizeof(buff) - len, ", \"Version\": %d", header->version);
 
         mbus_str_json_encode(str_encoded, mbus_data_product_name(header), sizeof(str_encoded));
 
-        len += snprintf(&buff[len], sizeof(buff) - len, ", \"SlaveInformation_ProductName\": \"%s\"", str_encoded);
+        len += snprintf(&buff[len], sizeof(buff) - len, ", \"ProductName\": \"%s\"", str_encoded);
 
         mbus_str_json_encode(str_encoded, mbus_data_variable_medium_lookup(header->medium), sizeof(str_encoded));
 
-        len += snprintf(&buff[len], sizeof(buff) - len, ", \"SlaveInformation_Medium\": \"%s\"", str_encoded);
-        len += snprintf(&buff[len], sizeof(buff) - len, ", \"SlaveInformation_AccessNumber\": %d", header->access_no);
-        len += snprintf(&buff[len], sizeof(buff) - len, ", \"SlaveInformation_Status\": \"%.2X\"", header->status);
-        len += snprintf(&buff[len], sizeof(buff) - len, ", \"SlaveInformation_Signature\": \"%.2X%.2X\"", header->signature[1], header->signature[0]);
+        len += snprintf(&buff[len], sizeof(buff) - len, ", \"Medium\": \"%s\"", str_encoded);
+        len += snprintf(&buff[len], sizeof(buff) - len, ", \"AccessNumber\": %d", header->access_no);
+        len += snprintf(&buff[len], sizeof(buff) - len, ", \"Status\": \"%.2X\"", header->status);
+        len += snprintf(&buff[len], sizeof(buff) - len, ", \"Signature\": \"%.2X%.2X\"", header->signature[1], header->signature[0]);
+
+        len += snprintf(&buff[len], sizeof(buff) - len, "}");
 
         return buff;
     }
@@ -4515,7 +4519,7 @@ mbus_data_variable_json(mbus_data_variable *data)
 
         len += snprintf(&buff[len], buff_size - len, MBUS_JSON_PROCESSING_INSTRUCTION);
 
-        len += snprintf(&buff[len], buff_size - len, "{");
+        len += snprintf(&buff[len], buff_size - len, "{\"MBusData\": {");
 
         len += snprintf(&buff[len], buff_size - len, "%s",
                         mbus_data_variable_header_json(&(data->header)));
@@ -4546,7 +4550,7 @@ mbus_data_variable_json(mbus_data_variable *data)
             len += snprintf(&buff[len], buff_size - len, "%s",
                             mbus_data_variable_record_json(record, i, -1, &(data->header)));
         }
-        len += snprintf(&buff[len], buff_size - len, "]}");
+        len += snprintf(&buff[len], buff_size - len, "]}}");
 
         return buff;
     }
@@ -4575,15 +4579,16 @@ mbus_data_fixed_json(mbus_data_fixed *data)
 
         len += snprintf(&buff[len], buff_size - len, MBUS_JSON_PROCESSING_INSTRUCTION);
 
-        len += snprintf(&buff[len], buff_size - len, "{");
+        len += snprintf(&buff[len], buff_size - len, "{\"MBusData\": {");
 
-        len += snprintf(&buff[len], buff_size - len, "\"SlaveInformation_Id\": %lld", mbus_data_bcd_decode(data->id_bcd, 4));
+        len += snprintf(&buff[len], buff_size - len, "\"SlaveInformation\": {");
+        len += snprintf(&buff[len], buff_size - len, "\"Id\": %lld", mbus_data_bcd_decode(data->id_bcd, 4));
 
         mbus_str_json_encode(str_encoded, mbus_data_fixed_medium(data), sizeof(str_encoded));
-        len += snprintf(&buff[len], buff_size - len, ", \"SlaveInformation_Medium\": \"%s\"", str_encoded);
+        len += snprintf(&buff[len], buff_size - len, ", \"Medium\": \"%s\"", str_encoded);
 
-        len += snprintf(&buff[len], buff_size - len, ", \"SlaveInformation_AccessNumber\": %d", data->tx_cnt);
-        len += snprintf(&buff[len], buff_size - len, ", \"SlaveInformation_Status\": \"%.2X\"", data->status);
+        len += snprintf(&buff[len], buff_size - len, ", \"AccessNumber\": %d", data->tx_cnt);
+        len += snprintf(&buff[len], buff_size - len, ", \"Status\": \"%.2X\"", data->status);
         len += snprintf(&buff[len], buff_size - len, "}, ");
 
         len += snprintf(&buff[len], buff_size - len, "\"DataRecord\": [{\"id\": 0");
@@ -4624,7 +4629,7 @@ mbus_data_fixed_json(mbus_data_fixed *data)
 
         len += snprintf(&buff[len], buff_size - len, "}]");
 
-        len += snprintf(&buff[len], buff_size - len, "}");
+        len += snprintf(&buff[len], buff_size - len, "}}");
 
         return buff;
     }
@@ -4648,12 +4653,16 @@ mbus_data_error_json(int error)
         return NULL;
 
     len += snprintf(&buff[len], buff_size - len, MBUS_JSON_PROCESSING_INSTRUCTION);
-    len += snprintf(&buff[len], buff_size - len, "{");
+    len += snprintf(&buff[len], buff_size - len, "{\"MBusData\": {");
+
+    len += snprintf(&buff[len], buff_size - len, "\"SlaveInformation\": {");
 
     mbus_str_json_encode(str_encoded, mbus_data_error_lookup(error), sizeof(str_encoded));
-    len += snprintf(&buff[len], buff_size - len, "\"SlaveInformation_Error\": \"%s\"", str_encoded);
+    len += snprintf(&buff[len], buff_size - len, "\"Error\": \"%s\"", str_encoded);
 
     len += snprintf(&buff[len], buff_size - len, "}");
+
+    len += snprintf(&buff[len], buff_size - len, "}}");
 
     return buff;
 }
@@ -4746,7 +4755,7 @@ mbus_frame_json(mbus_frame *frame)
 
             len += snprintf(&buff[len], buff_size - len, MBUS_JSON_PROCESSING_INSTRUCTION);
 
-            len += snprintf(&buff[len], buff_size - len, "{");
+            len += snprintf(&buff[len], buff_size - len, "{\"MBusData\": {");
 
             // only print the header info for the first frame (should be
             // the same for each frame in a sequence of a multi-telegram
@@ -4835,7 +4844,7 @@ mbus_frame_json(mbus_frame *frame)
                 }
             }
 
-            len += snprintf(&buff[len], buff_size - len, "]}");
+            len += snprintf(&buff[len], buff_size - len, "]}}");
 
             return buff;
         }
