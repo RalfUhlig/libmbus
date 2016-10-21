@@ -1620,6 +1620,124 @@ mbus_frame_data_json_normalized(mbus_frame_data *data)
 }
 
 
+//------------------------------------------------------------------------------
+/// Generate InfluxDB Line Protocol for variable-length data
+//------------------------------------------------------------------------------
+char *
+mbus_data_variable_influxdb_normalized(mbus_data_variable *data)
+{
+    mbus_data_record *record;
+    mbus_record *norm_record;
+    char *buff = NULL, *new_buff = NULL;
+    char str_encoded[768] = "";
+    size_t len = 0, buff_size = 8192;
+    size_t i;
+
+    if (data)
+    {
+        buff = (char*) malloc(buff_size);
+
+        if (buff == NULL)
+            return NULL;
+
+        len += snprintf(&buff[len], buff_size - len, MBUS_INFLUXDB_PROCESSING_INSTRUCTION);
+
+        len += snprintf(&buff[len], buff_size - len, "MBusData, ");
+
+        len += snprintf(&buff[len], buff_size - len, "%s ", mbus_data_variable_header_influxdb(&(data->header)));
+
+        for (record = data->record, i = 0; record; record = record->next, i++)
+        {
+            norm_record = mbus_parse_variable_record(record);
+
+            if ((buff_size - len) < 1024)
+            {
+                buff_size *= 2;
+                new_buff = (char*) realloc(buff,buff_size);
+
+                if (new_buff == NULL)
+                {
+                    mbus_record_free(norm_record);
+                    free(buff);
+                    return NULL;
+                }
+
+                buff = new_buff;
+            }
+
+            if (norm_record != NULL)
+            {
+                if (i > 0)
+                {
+                    len += snprintf(&buff[len], buff_size - len, ",");
+                }
+
+                mbus_str_influxdb_encode(str_encoded, norm_record->function_medium, sizeof(str_encoded));
+                len += snprintf(&buff[len], buff_size - len, "DataRecord_%d_Function=\"%s\"", i, str_encoded);
+
+                len += snprintf(&buff[len], buff_size - len, ",DataRecord_%d_StorageNumber=%ld", i, norm_record->storage_number);
+
+                if (norm_record->tariff >= 0)
+                {
+                    len += snprintf(&buff[len], buff_size - len, ",DataRecord_%d_Tariff=%ld", norm_record->tariff);
+                    len += snprintf(&buff[len], buff_size - len, ",DataRecord_%d_Device=>%d", norm_record->device);
+                }
+
+                mbus_str_influxdb_encode(str_encoded, norm_record->unit, sizeof(str_encoded));
+
+                len += snprintf(&buff[len], buff_size - len, ",DataRecord_%d_Unit=\"%s\"", str_encoded);
+
+                mbus_str_influxdb_encode(str_encoded, norm_record->quantity, sizeof(str_encoded));
+                len += snprintf(&buff[len], buff_size - len, ",DataRecord_%d_Quantity=\"%s\"", str_encoded);
+
+
+                if (norm_record->is_numeric)
+                {
+                    len += snprintf(&buff[len], buff_size - len, ",DataRecord_%d_Value=%f", norm_record->value.real_val);
+                }
+                else
+                {
+                    mbus_str_influxdb_encode(str_encoded, norm_record->value.str_val.value, sizeof(str_encoded));
+                    len += snprintf(&buff[len], buff_size - len, ",DataRecord_%d_Value=\"%s\"", str_encoded);
+                }
+
+                mbus_record_free(norm_record);
+            }
+            else
+            {
+            }
+        }
+
+        return buff;
+    }
+
+    return NULL;
+}
+
+//------------------------------------------------------------------------------
+/// Return a string containing an InfluxDB Line Protocol representation of the 
+/// M-BUS frame data.
+//------------------------------------------------------------------------------
+char *
+mbus_frame_data_influxdb_normalized(mbus_frame_data *data)
+{
+    if (data)
+    {
+        if (data->type == MBUS_DATA_TYPE_FIXED)
+        {
+            return mbus_data_fixed_influxdb(&(data->data_fix));
+        }
+
+        if (data->type == MBUS_DATA_TYPE_VARIABLE)
+        {
+            return mbus_data_variable_influxdb_normalized(&(data->data_var));
+        }
+    }
+
+    return NULL;
+}
+
+
 mbus_handle *
 mbus_context_serial(const char *device)
 {

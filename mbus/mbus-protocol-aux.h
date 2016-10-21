@@ -494,6 +494,15 @@ char * mbus_data_variable_json_normalized(mbus_data_variable *data);
 char * mbus_frame_data_json_normalized(mbus_frame_data *data);
 
 /**
+ * Return a string containing an InfluxDB Line Protocol representation of the normalized M-BUS frame data.
+ *
+ * @param data    M-Bus frame data
+ *
+ * @return string with InfluxDB Line Protocol
+ */
+char * mbus_frame_data_influxdb_normalized(mbus_frame_data *data);
+
+/**
  * Iterate over secondary addresses, send a probe package to all addresses matching
  * the given addresses mask.
  *

@@ -503,7 +503,10 @@ unsigned int mbus_manufacturer_id(char *manufacturer);
 #define MBUS_XML_PROCESSING_INSTRUCTION         "<?xml version=\"1.0\" encoding=\"ISO-8859-1\"?>\n"
 
 // JSON files do not have any header. But it might be useful to have one.
-#define MBUS_JSON_PROCESSING_INSTRUCTION         ""
+#define MBUS_JSON_PROCESSING_INSTRUCTION        ""
+
+// InfluxDB Line Protocol files do not have any header. But it might be useful to have one.
+#define MBUS_INFLUXDB_PROCESSING_INSTRUCTION    ""
 
 //
 // Event callback functions
@@ -596,6 +599,20 @@ char *mbus_frame_data_json(mbus_frame_data *data);
 char *mbus_data_variable_header_json(mbus_data_variable_header *header);
 
 char *mbus_frame_json(mbus_frame *frame);
+
+//
+// InfluxDB Line Protocol generating functions
+//
+int   mbus_str_influxdb_encode(unsigned char *dst, const unsigned char *src, size_t max_len);
+char *mbus_data_influxdb(mbus_frame_data *data);
+char *mbus_data_variable_influxdb(mbus_data_variable *data);
+char *mbus_data_fixed_influxdb(mbus_data_fixed *data);
+char *mbus_data_error_influxdb(int error);
+char *mbus_frame_data_influxdb(mbus_frame_data *data);
+
+char *mbus_data_variable_header_influxdb(mbus_data_variable_header *header);
+
+char *mbus_frame_influxdb(mbus_frame *frame);
 
 //
 // Debug/dump
