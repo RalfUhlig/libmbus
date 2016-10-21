@@ -23,7 +23,7 @@ main(int argc, char *argv[])
     unsigned char raw_buff[4096], buff[4096];
     mbus_frame reply;
     mbus_frame_data frame_data;
-    char *resultstr = NULL, *file = NULL;
+    char *result_str = NULL, *file = NULL;
 
     for (i = 1; i < argc; i++)
     {
@@ -107,39 +107,39 @@ main(int argc, char *argv[])
 
     if (influxdb)
     {
-        resultstr = normalized ? mbus_frame_data_influxdb_normalized(&frame_data) : mbus_frame_data_influxdb(&frame_data);
+        result_str = normalized ? mbus_frame_data_influxdb_normalized(&frame_data) : mbus_frame_data_influxdb(&frame_data);
 
-        if (resultstr == NULL)
+        if (result_str == NULL)
         {
             fprintf(stderr, "Failed to generate InfluxDB Line Protocol representation of MBUS frame: %s\n", mbus_error_str());
             return 1;
         }
-        printf("%s", resultstr);
-        free(resultstr);
+        printf("%s", result_str);
+        free(result_str);
     }
     else if (json)
     {
-        resultstr = normalized ? mbus_frame_data_json_normalized(&frame_data) : mbus_frame_data_json(&frame_data);
+        result_str = normalized ? mbus_frame_data_json_normalized(&frame_data) : mbus_frame_data_json(&frame_data);
 
-        if (resultstr == NULL)
+        if (result_str == NULL)
         {
             fprintf(stderr, "Failed to generate JSON representation of MBUS frame: %s\n", mbus_error_str());
             return 1;
         }
-        printf("%s", resultstr);
-        free(resultstr);
+        printf("%s", result_str);
+        free(result_str);
     }
     else
     {
-        resultstr = normalized ? mbus_frame_data_xml_normalized(&frame_data) : mbus_frame_data_xml(&frame_data);
+        result_str = normalized ? mbus_frame_data_xml_normalized(&frame_data) : mbus_frame_data_xml(&frame_data);
 
-        if (resultstr == NULL)
+        if (result_str == NULL)
         {
             fprintf(stderr, "Failed to generate XML representation of MBUS frame: %s\n", mbus_error_str());
             return 1;
         }
-        printf("%s", resultstr);
-        free(resultstr);
+        printf("%s", result_str);
+        free(result_str);
     }
 
     mbus_data_record_free(frame_data.data_var.record);
