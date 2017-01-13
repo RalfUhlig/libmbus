@@ -4546,7 +4546,8 @@ mbus_data_variable_json(mbus_data_variable *data)
             len += snprintf(&buff[len], buff_size - len, "%s",
                             mbus_data_variable_record_json(record, i, -1, &(data->header)));
         }
-        len += snprintf(&buff[len], buff_size - len, "]}");
+
+        len += snprintf(&buff[len], buff_size - len, "]}\n");
 
         return buff;
     }
@@ -4624,7 +4625,7 @@ mbus_data_fixed_json(mbus_data_fixed *data)
 
         len += snprintf(&buff[len], buff_size - len, "}]");
 
-        len += snprintf(&buff[len], buff_size - len, "}");
+        len += snprintf(&buff[len], buff_size - len, "}\n");
 
         return buff;
     }
@@ -4653,7 +4654,7 @@ mbus_data_error_json(int error)
     mbus_str_json_encode(str_encoded, mbus_data_error_lookup(error), sizeof(str_encoded));
     len += snprintf(&buff[len], buff_size - len, "\"SlaveInformation_Error\": \"%s\"", str_encoded);
 
-    len += snprintf(&buff[len], buff_size - len, "}");
+    len += snprintf(&buff[len], buff_size - len, "}\n");
 
     return buff;
 }
@@ -4835,7 +4836,7 @@ mbus_frame_json(mbus_frame *frame)
                 }
             }
 
-            len += snprintf(&buff[len], buff_size - len, "]}");
+            len += snprintf(&buff[len], buff_size - len, "]}\n");
 
             return buff;
         }
@@ -5075,6 +5076,8 @@ mbus_data_variable_influxdb(mbus_data_variable *data)
                             mbus_data_variable_record_influxdb(record, i, -1, &(data->header)));
         }
 
+        len += snprintf(&buff[len], buff_size - len, "\n");
+
         return buff;
     }
 
@@ -5142,6 +5145,8 @@ mbus_data_fixed_influxdb(mbus_data_fixed *data)
             len += snprintf(&buff[len], buff_size - len, ",DataRecord_1_Value=%d", val);
         }
 
+        len += snprintf(&buff[len], buff_size - len, "\n");
+
         return buff;
     }
 
@@ -5169,6 +5174,8 @@ mbus_data_error_influxdb(int error)
 
     mbus_str_xml_encode(str_encoded, mbus_data_error_lookup(error), sizeof(str_encoded));
     len += snprintf(&buff[len], buff_size - len, "SlaveInformation_Error=\"%s\"", str_encoded);
+
+    len += snprintf(&buff[len], buff_size - len, "\n");
 
     return buff;
 }
@@ -5348,6 +5355,8 @@ mbus_frame_influxdb(mbus_frame *frame)
                     mbus_data_record_free(frame_data.data_var.record);
                 }
             }
+
+            len += snprintf(&buff[len], buff_size - len, "\n");
 
             return buff;
         }
