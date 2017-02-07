@@ -604,6 +604,7 @@ char *mbus_frame_json(mbus_frame *frame);
 // InfluxDB Line Protocol generating functions
 //
 int   mbus_str_influxdb_encode(unsigned char *dst, const unsigned char *src, size_t max_len);
+int   mbus_str_influxdb_encode_header(unsigned char *dst, const unsigned char *src, size_t max_len);
 char *mbus_data_influxdb(mbus_frame_data *data);
 char *mbus_data_variable_influxdb(mbus_data_variable *data);
 char *mbus_data_fixed_influxdb(mbus_data_fixed *data);

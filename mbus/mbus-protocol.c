@@ -4910,6 +4910,63 @@ mbus_str_influxdb_encode(unsigned char *dst, const unsigned char *src, size_t ma
     return 0;
 }
 
+int
+mbus_str_influxdb_encode_header(unsigned char *dst, const unsigned char *src, size_t max_len)
+{
+    size_t i, len;
+
+    i = 0;
+    len = 0;
+
+    if (dst == NULL)
+    {
+        return -1;
+    }
+
+    if (src == NULL)
+    {
+        dst[len] = '\0';
+        return -2;
+    }
+
+    while(len < max_len)
+    {
+        if (src[i] == '\0')
+        {
+            break;
+        }
+
+        if (iscntrl(src[i]))
+        {
+            // convert all control chars into spaces
+            dst[len++] = snprintf(&dst[len], max_len - len, "\\ ");
+        }
+        else
+        {
+            switch (src[i])
+            {
+                case '\\':
+                    len += snprintf(&dst[len], max_len - len, "\\\\");
+                    break;
+                case ' ':
+                    len += snprintf(&dst[len], max_len - len, "\\ ");
+                    break;
+                case '=':
+                    len += snprintf(&dst[len], max_len - len, "\\=");
+                    break;
+                default:
+                    dst[len++] = src[i];
+                    break;
+            }
+        }
+
+        i++;
+    }
+
+    dst[len] = '\0';
+    return 0;
+}
+
 //------------------------------------------------------------------------------
 /// Generate InfluxDb Line Protocol for the variable-length data header
 //------------------------------------------------------------------------------
@@ -4923,20 +4980,27 @@ mbus_data_variable_header_influxdb(mbus_data_variable_header *header)
     if (header)
     {
         len += snprintf(&buff[len], sizeof(buff) - len, "SlaveInformation_Id=%lld", mbus_data_bcd_decode(header->id_bcd, 4));
-        len += snprintf(&buff[len], sizeof(buff) - len, ",SlaveInformation_Manufacturer=\"%s\"",
+        len += snprintf(&buff[len], sizeof(buff) - len, ",SlaveInformation_Manufacturer=%s",
                 mbus_decode_manufacturer(header->manufacturer[0], header->manufacturer[1]));
         len += snprintf(&buff[len], sizeof(buff) - len, ",SlaveInformation_Version=%d", header->version);
 
-        mbus_str_influxdb_encode(str_encoded, mbus_data_product_name(header), sizeof(str_encoded));
+        mbus_str_influxdb_encode_header(str_encoded, mbus_data_product_name(header), sizeof(str_encoded));
 
-        len += snprintf(&buff[len], sizeof(buff) - len, ",SlaveInformation_ProductName=\"%s\"", str_encoded);
+        if (strlen(str_encoded) > 0)
+        {
+           len += snprintf(&buff[len], sizeof(buff) - len, ",SlaveInformation_ProductName=%s", str_encoded);
+        }
 
-        mbus_str_influxdb_encode(str_encoded, mbus_data_variable_medium_lookup(header->medium), sizeof(str_encoded));
+        mbus_str_influxdb_encode_header(str_encoded, mbus_data_variable_medium_lookup(header->medium), sizeof(str_encoded));
 
-        len += snprintf(&buff[len], sizeof(buff) - len, ",SlaveInformation_Medium=\"%s\"", str_encoded);
+        if (strlen(str_encoded) > 0)
+        {
+            len += snprintf(&buff[len], sizeof(buff) - len, ",SlaveInformation_Medium=%s", str_encoded);
+        }
+
         len += snprintf(&buff[len], sizeof(buff) - len, ",SlaveInformation_AccessNumber=%d", header->access_no);
-        len += snprintf(&buff[len], sizeof(buff) - len, ",SlaveInformation_Status=\"%.2X\"", header->status);
-        len += snprintf(&buff[len], sizeof(buff) - len, ",SlaveInformation_Signature=\"%.2X%.2X\"", header->signature[1], header->signature[0]);
+        len += snprintf(&buff[len], sizeof(buff) - len, ",SlaveInformation_Status=%.2X", header->status);
+        len += snprintf(&buff[len], sizeof(buff) - len, ",SlaveInformation_Signature=%.2X%.2X", header->signature[1], header->signature[0]);
 
         return buff;
     }
@@ -5108,11 +5172,15 @@ mbus_data_fixed_influxdb(mbus_data_fixed *data)
 
         len += snprintf(&buff[len], buff_size - len, "SlaveInformation_Id=%lld", mbus_data_bcd_decode(data->id_bcd, 4));
 
-        mbus_str_influxdb_encode(str_encoded, mbus_data_fixed_medium(data), sizeof(str_encoded));
-        len += snprintf(&buff[len], buff_size - len, ",SlaveInformation_Medium=\"%s\"", str_encoded);
+        mbus_str_influxdb_encode_header(str_encoded, mbus_data_fixed_medium(data), sizeof(str_encoded));
+
+        if (strlen(str_encoded) > 0)
+        {
+            len += snprintf(&buff[len], buff_size - len, ",SlaveInformation_Medium=%s", str_encoded);
+        }
 
         len += snprintf(&buff[len], buff_size - len, ",SlaveInformation_AccessNumber=%d", data->tx_cnt);
-        len += snprintf(&buff[len], buff_size - len, ",SlaveInformation_Status=\"%.2X\"", data->status);
+        len += snprintf(&buff[len], buff_size - len, ",SlaveInformation_Status=%.2X", data->status);
         len += snprintf(&buff[len], buff_size - len, " ");
 
         mbus_str_influxdb_encode(str_encoded, mbus_data_fixed_function(data->status), sizeof(str_encoded));
@@ -5172,8 +5240,8 @@ mbus_data_error_influxdb(int error)
     len += snprintf(&buff[len], buff_size - len, MBUS_INFLUXDB_PROCESSING_INSTRUCTION);
     len += snprintf(&buff[len], buff_size - len, "MBusData,");
 
-    mbus_str_xml_encode(str_encoded, mbus_data_error_lookup(error), sizeof(str_encoded));
-    len += snprintf(&buff[len], buff_size - len, "SlaveInformation_Error=\"%s\"", str_encoded);
+    mbus_str_influxdb_encode_header(str_encoded, mbus_data_error_lookup(error), sizeof(str_encoded));
+    len += snprintf(&buff[len], buff_size - len, "SlaveInformation_Error=%s", str_encoded);
 
     len += snprintf(&buff[len], buff_size - len, "\n");
 
