@@ -3898,10 +3898,11 @@ mbus_data_variable_header_xml(mbus_data_variable_header *header)
 /// Generate XML for a single variable-length data record
 //------------------------------------------------------------------------------
 char *
-mbus_data_variable_record_xml(mbus_data_record *record, int record_cnt, int frame_cnt, mbus_data_variable_header *header)
+mbus_data_variable_record_xml(mbus_data_record *record, int record_cnt, int frame_cnt, mbus_data_variable_header *header, int options)
 {
     static char buff[8192];
     char str_encoded[768];
+    char str_encoded_value[768];
     size_t len = 0;
     struct tm * timeinfo;
     char timestamp[21];
@@ -3909,6 +3910,13 @@ mbus_data_variable_record_xml(mbus_data_record *record, int record_cnt, int fram
 
     if (record)
     {
+        mbus_str_xml_encode(str_encoded_value, mbus_data_record_value(record), sizeof(str_encoded_value));
+
+        if ((options & MBUS_VALUE_OPTION_ONLYNUMERIC) != 0 && !isnumeric(str_encoded_value))
+        {
+          return "";
+        }
+
         if (frame_cnt >= 0)
         {
             len += snprintf(&buff[len], sizeof(buff) - len,
@@ -3954,8 +3962,7 @@ mbus_data_variable_record_xml(mbus_data_record *record, int record_cnt, int fram
                             "        <Unit>%s</Unit>\n", str_encoded);
         }
 
-        mbus_str_xml_encode(str_encoded, mbus_data_record_value(record), sizeof(str_encoded));
-        len += snprintf(&buff[len], sizeof(buff) - len, "        <Value>%s</Value>\n", str_encoded);
+        len += snprintf(&buff[len], sizeof(buff) - len, "        <Value>%s</Value>\n", str_encoded_value);
 
         if (record->timestamp > 0)
         {
@@ -3977,10 +3984,10 @@ mbus_data_variable_record_xml(mbus_data_record *record, int record_cnt, int fram
 /// Generate XML for variable-length data
 //------------------------------------------------------------------------------
 char *
-mbus_data_variable_xml(mbus_data_variable *data)
+mbus_data_variable_xml(mbus_data_variable *data, int options)
 {
     mbus_data_record *record;
-    char *buff = NULL, *new_buff;
+    char *buff = NULL, *new_buff, *dataRecord;
     size_t len = 0, buff_size = 8192;
     int i;
 
@@ -4014,8 +4021,12 @@ mbus_data_variable_xml(mbus_data_variable *data)
                 buff = new_buff;
             }
 
-            len += snprintf(&buff[len], buff_size - len, "%s",
-                            mbus_data_variable_record_xml(record, i, -1, &(data->header)));
+            dataRecord = mbus_data_variable_record_xml(record, i, -1, &(data->header), options);
+
+            if (strlen(dataRecord) > 0)
+            {
+                len += snprintf(&buff[len], buff_size - len, "%s", dataRecord);
+            }
         }
         len += snprintf(&buff[len], buff_size - len, "</MBusData>\n");
 
@@ -4137,7 +4148,7 @@ mbus_data_error_xml(int error)
 /// Return a string containing an XML representation of the M-BUS frame data.
 //------------------------------------------------------------------------------
 char *
-mbus_frame_data_xml(mbus_frame_data *data)
+mbus_frame_data_xml(mbus_frame_data *data, int options)
 {
     if (data)
     {
@@ -4153,7 +4164,7 @@ mbus_frame_data_xml(mbus_frame_data *data)
 
         if (data->type == MBUS_DATA_TYPE_VARIABLE)
         {
-            return mbus_data_variable_xml(&(data->data_var));
+            return mbus_data_variable_xml(&(data->data_var), options);
         }
     }
 
@@ -4165,7 +4176,7 @@ mbus_frame_data_xml(mbus_frame_data *data)
 /// Return an XML representation of the M-BUS frame.
 //------------------------------------------------------------------------------
 char *
-mbus_frame_xml(mbus_frame *frame)
+mbus_frame_xml(mbus_frame *frame, int options)
 {
     mbus_frame_data frame_data;
     mbus_frame *iter;
@@ -4250,7 +4261,7 @@ mbus_frame_xml(mbus_frame *frame)
                 }
 
                 len += snprintf(&buff[len], buff_size - len, "%s",
-                                mbus_data_variable_record_xml(record, record_cnt, frame_cnt, &(frame_data.data_var.header)));
+                                mbus_data_variable_record_xml(record, record_cnt, frame_cnt, &(frame_data.data_var.header), options));
             }
 
             // free all records in the list
@@ -4289,7 +4300,7 @@ mbus_frame_xml(mbus_frame *frame)
                     }
 
                     len += snprintf(&buff[len], buff_size - len, "%s",
-                                    mbus_data_variable_record_xml(record, record_cnt, frame_cnt, &(frame_data.data_var.header)));
+                                    mbus_data_variable_record_xml(record, record_cnt, frame_cnt, &(frame_data.data_var.header), options));
                 }
 
                 // free all records in the list
@@ -4412,10 +4423,11 @@ mbus_data_variable_header_json(mbus_data_variable_header *header)
 /// Generate JSON for a single variable-length data record
 //------------------------------------------------------------------------------
 char *
-mbus_data_variable_record_json(mbus_data_record *record, int record_cnt, int frame_cnt, mbus_data_variable_header *header)
+mbus_data_variable_record_json(mbus_data_record *record, int record_cnt, int frame_cnt, mbus_data_variable_header *header, int options)
 {
     static char buff[8192];
     char str_encoded[768];
+    char str_encoded_value[768];
     size_t len = 0;
     struct tm * timeinfo;
     char timestamp[21];
@@ -4423,6 +4435,13 @@ mbus_data_variable_record_json(mbus_data_record *record, int record_cnt, int fra
 
     if (record)
     {
+        mbus_str_json_encode(str_encoded_value, mbus_data_record_value(record), sizeof(str_encoded_value));
+
+        if ((options & MBUS_VALUE_OPTION_ONLYNUMERIC) != 0 && !isnumeric(str_encoded_value))
+        {
+          return "";
+        }
+
         if (frame_cnt >= 0)
         {
             len += snprintf(&buff[len], sizeof(buff) - len,
@@ -4468,15 +4487,13 @@ mbus_data_variable_record_json(mbus_data_record *record, int record_cnt, int fra
                             ", \"Unit\": \"%s\"", str_encoded);
         }
 
-        mbus_str_json_encode(str_encoded, mbus_data_record_value(record), sizeof(str_encoded));
-
-        if (isnumeric(str_encoded))
+        if (isnumeric(str_encoded_value))
         {
-            len += snprintf(&buff[len], sizeof(buff) - len, ", \"Value\": %s", str_encoded);
+            len += snprintf(&buff[len], sizeof(buff) - len, ", \"Value\": %s", str_encoded_value);
         }
         else
         {
-            len += snprintf(&buff[len], sizeof(buff) - len, ", \"Value\": \"%s\"", str_encoded);
+            len += snprintf(&buff[len], sizeof(buff) - len, ", \"Value\": \"%s\"", str_encoded_value);
         }
 
         if (record->timestamp > 0)
@@ -4499,12 +4516,12 @@ mbus_data_variable_record_json(mbus_data_record *record, int record_cnt, int fra
 /// Generate JSON for variable-length data
 //------------------------------------------------------------------------------
 char *
-mbus_data_variable_json(mbus_data_variable *data)
+mbus_data_variable_json(mbus_data_variable *data, int options)
 {
     mbus_data_record *record;
-    char *buff = NULL, *new_buff;
+    char *buff = NULL, *new_buff, *dataRecord;
     size_t len = 0, buff_size = 8192;
-    int i;
+    int i, dataRecordCount;
 
     if (data)
     {
@@ -4522,7 +4539,7 @@ mbus_data_variable_json(mbus_data_variable *data)
 
         len += snprintf(&buff[len], buff_size - len, ", \"DataRecord\": [");
 
-        for (record = data->record, i = 0; record; record = record->next, i++)
+        for (record = data->record, i = 0, dataRecordCount = 0; record; record = record->next, i++)
         {
             if ((buff_size - len) < 1024)
             {
@@ -4538,13 +4555,21 @@ mbus_data_variable_json(mbus_data_variable *data)
                 buff = new_buff;
             }
 
-            if (i > 0)
-            {
-              len += snprintf(&buff[len], buff_size - len, ", ");
-            }
+            dataRecord = mbus_data_variable_record_json(record, i, -1, &(data->header), options);
 
-            len += snprintf(&buff[len], buff_size - len, "%s",
-                            mbus_data_variable_record_json(record, i, -1, &(data->header)));
+            if (strlen(dataRecord) > 0)
+            {
+                dataRecordCount++;
+
+                if (dataRecordCount > 1)
+                {
+                    len += snprintf(&buff[len], buff_size - len, ", %s", dataRecord);
+                }
+                else
+                {
+                    len += snprintf(&buff[len], buff_size - len, "%s", dataRecord);
+                }
+            }
         }
 
         len += snprintf(&buff[len], buff_size - len, "]}\n");
@@ -4663,7 +4688,7 @@ mbus_data_error_json(int error)
 /// Return a string containing an JSON representation of the M-BUS frame data.
 //------------------------------------------------------------------------------
 char *
-mbus_frame_data_json(mbus_frame_data *data)
+mbus_frame_data_json(mbus_frame_data *data, int options)
 {
     if (data)
     {
@@ -4679,7 +4704,7 @@ mbus_frame_data_json(mbus_frame_data *data)
 
         if (data->type == MBUS_DATA_TYPE_VARIABLE)
         {
-            return mbus_data_variable_json(&(data->data_var));
+            return mbus_data_variable_json(&(data->data_var), options);
         }
     }
 
@@ -4690,7 +4715,7 @@ mbus_frame_data_json(mbus_frame_data *data)
 /// Return an JSON representation of the M-BUS frame.
 //------------------------------------------------------------------------------
 char *
-mbus_frame_json(mbus_frame *frame)
+mbus_frame_json(mbus_frame *frame, int options)
 {
     mbus_frame_data frame_data;
     mbus_frame *iter;
@@ -4782,7 +4807,7 @@ mbus_frame_json(mbus_frame *frame)
                 }
 
                 len += snprintf(&buff[len], buff_size - len, "%s",
-                                mbus_data_variable_record_json(record, record_cnt, frame_cnt, &(frame_data.data_var.header)));
+                                mbus_data_variable_record_json(record, record_cnt, frame_cnt, &(frame_data.data_var.header), options));
             }
 
             // free all records in the list
@@ -4826,7 +4851,7 @@ mbus_frame_json(mbus_frame *frame)
                     }
 
                     len += snprintf(&buff[len], buff_size - len, "%s",
-                                    mbus_data_variable_record_json(record, record_cnt, frame_cnt, &(frame_data.data_var.header)));
+                                    mbus_data_variable_record_json(record, record_cnt, frame_cnt, &(frame_data.data_var.header), options));
                 }
 
                 // free all records in the list
@@ -5012,10 +5037,11 @@ mbus_data_variable_header_influxdb(mbus_data_variable_header *header)
 /// Generate InfluxDB Line Protocol for a single variable-length data record
 //------------------------------------------------------------------------------
 char *
-mbus_data_variable_record_influxdb(mbus_data_record *record, int record_cnt, int frame_cnt, mbus_data_variable_header *header)
+mbus_data_variable_record_influxdb(mbus_data_record *record, int record_cnt, int frame_cnt, mbus_data_variable_header *header, int options)
 {
     static char buff[8192];
     char str_encoded[768];
+    char str_encoded_value[768];
     size_t len = 0;
     struct tm * timeinfo;
     char timestamp[21];
@@ -5024,6 +5050,13 @@ mbus_data_variable_record_influxdb(mbus_data_record *record, int record_cnt, int
 
     if (record)
     {
+        mbus_str_influxdb_encode(str_encoded_value, mbus_data_record_value(record), sizeof(str_encoded_value));
+
+        if ((options & MBUS_VALUE_OPTION_ONLYNUMERIC) != 0 && !isnumeric(str_encoded_value))
+        {
+          return "";
+        }
+
         if (frame_cnt >= 0)
         {
             snprintf(prefix, sizeof(prefix), "DataRecord_%d_%d", record_cnt, frame_cnt);
@@ -5066,15 +5099,13 @@ mbus_data_variable_record_influxdb(mbus_data_record *record, int record_cnt, int
                             ",%s_Unit=\"%s\"", prefix, str_encoded);
         }
 
-        mbus_str_influxdb_encode(str_encoded, mbus_data_record_value(record), sizeof(str_encoded));
-
-        if (isnumeric(str_encoded))
+        if (isnumeric(str_encoded_value))
         {
-            len += snprintf(&buff[len], sizeof(buff) - len, ",%s_Value=%s", prefix, str_encoded);
+            len += snprintf(&buff[len], sizeof(buff) - len, ",%s_Value=%s", prefix, str_encoded_value);
         }
         else
         {
-            len += snprintf(&buff[len], sizeof(buff) - len, ",%s_Value=\"%s\"", prefix, str_encoded);
+            len += snprintf(&buff[len], sizeof(buff) - len, ",%s_Value=\"%s\"", prefix, str_encoded_value);
         }
         if (record->timestamp > 0)
         {
@@ -5094,12 +5125,12 @@ mbus_data_variable_record_influxdb(mbus_data_record *record, int record_cnt, int
 /// Generate InfluxDB Line Protocol for variable-length data
 //------------------------------------------------------------------------------
 char *
-mbus_data_variable_influxdb(mbus_data_variable *data)
+mbus_data_variable_influxdb(mbus_data_variable *data, int options)
 {
     mbus_data_record *record;
-    char *buff = NULL, *new_buff;
+    char *buff = NULL, *new_buff, *dataRecord;
     size_t len = 0, buff_size = 8192;
-    int i;
+    int i, dataRecordCount;
 
     if (data)
     {
@@ -5115,7 +5146,7 @@ mbus_data_variable_influxdb(mbus_data_variable *data)
         len += snprintf(&buff[len], buff_size - len, "%s ",
                         mbus_data_variable_header_influxdb(&(data->header)));
 
-        for (record = data->record, i = 0; record; record = record->next, i++)
+        for (record = data->record, i = 0, dataRecordCount = 0; record; record = record->next, i++)
         {
             if ((buff_size - len) < 1024)
             {
@@ -5131,13 +5162,21 @@ mbus_data_variable_influxdb(mbus_data_variable *data)
                 buff = new_buff;
             }
 
-            if (i > 0)
-            {
-                len += snprintf(&buff[len], buff_size - len, ",");
-            }
+            dataRecord = mbus_data_variable_record_influxdb(record, i, -1, &(data->header), options);
 
-            len += snprintf(&buff[len], buff_size - len, "%s",
-                            mbus_data_variable_record_influxdb(record, i, -1, &(data->header)));
+            if (strlen(dataRecord) > 0)
+            {
+                dataRecordCount++;
+
+                if (dataRecordCount > 1)
+                {
+                    len += snprintf(&buff[len], buff_size - len, ",%s", dataRecord);
+                }
+                else
+                {
+                    len += snprintf(&buff[len], buff_size - len, "%s", dataRecord);
+                }
+            }
         }
 
         len += snprintf(&buff[len], buff_size - len, "\n");
@@ -5253,7 +5292,7 @@ mbus_data_error_influxdb(int error)
 /// M-BUS frame data.
 //------------------------------------------------------------------------------
 char *
-mbus_frame_data_influxdb(mbus_frame_data *data)
+mbus_frame_data_influxdb(mbus_frame_data *data, int options)
 {
     if (data)
     {
@@ -5269,7 +5308,7 @@ mbus_frame_data_influxdb(mbus_frame_data *data)
 
         if (data->type == MBUS_DATA_TYPE_VARIABLE)
         {
-            return mbus_data_variable_influxdb(&(data->data_var));
+            return mbus_data_variable_influxdb(&(data->data_var), options);
         }
     }
 
@@ -5280,7 +5319,7 @@ mbus_frame_data_influxdb(mbus_frame_data *data)
 /// Return an InfluxDB Line Protocol representation of the M-BUS frame.
 //------------------------------------------------------------------------------
 char *
-mbus_frame_influxdb(mbus_frame *frame)
+mbus_frame_influxdb(mbus_frame *frame, int options)
 {
     mbus_frame_data frame_data;
     mbus_frame *iter;
@@ -5370,7 +5409,7 @@ mbus_frame_influxdb(mbus_frame *frame)
                 }
 
                 len += snprintf(&buff[len], buff_size - len, "%s",
-                                mbus_data_variable_record_influxdb(record, record_cnt, frame_cnt, &(frame_data.data_var.header)));
+                                mbus_data_variable_record_influxdb(record, record_cnt, frame_cnt, &(frame_data.data_var.header), options));
             }
 
             // free all records in the list
@@ -5414,7 +5453,7 @@ mbus_frame_influxdb(mbus_frame *frame)
                     }
 
                     len += snprintf(&buff[len], buff_size - len, "%s",
-                                    mbus_data_variable_record_influxdb(record, record_cnt, frame_cnt, &(frame_data.data_var.header)));
+                                    mbus_data_variable_record_influxdb(record, record_cnt, frame_cnt, &(frame_data.data_var.header), options));
                 }
 
                 // free all records in the list

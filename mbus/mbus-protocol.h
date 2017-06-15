@@ -508,6 +508,13 @@ unsigned int mbus_manufacturer_id(char *manufacturer);
 // InfluxDB Line Protocol files do not have any header. But it might be useful to have one.
 #define MBUS_INFLUXDB_PROCESSING_INSTRUCTION    ""
 
+
+//
+// MBUS VALUE OPTIONS
+//
+#define MBUS_VALUE_OPTION_ONLYNUMERIC	1
+
+
 //
 // Event callback functions
 //
@@ -577,28 +584,28 @@ mbus_slave_data *mbus_slave_data_get(size_t i);
 //
 int   mbus_str_xml_encode(unsigned char *dst, const unsigned char *src, size_t max_len);
 char *mbus_data_xml(mbus_frame_data *data);
-char *mbus_data_variable_xml(mbus_data_variable *data);
+char *mbus_data_variable_xml(mbus_data_variable *data, int options);
 char *mbus_data_fixed_xml(mbus_data_fixed *data);
 char *mbus_data_error_xml(int error);
-char *mbus_frame_data_xml(mbus_frame_data *data);
+char *mbus_frame_data_xml(mbus_frame_data *data, int options);
 
 char *mbus_data_variable_header_xml(mbus_data_variable_header *header);
 
-char *mbus_frame_xml(mbus_frame *frame);
+char *mbus_frame_xml(mbus_frame *frame, int options);
 
 //
 // JSON generating functions
 //
 int   mbus_str_json_encode(unsigned char *dst, const unsigned char *src, size_t max_len);
 char *mbus_data_json(mbus_frame_data *data);
-char *mbus_data_variable_json(mbus_data_variable *data);
+char *mbus_data_variable_json(mbus_data_variable *data, int options);
 char *mbus_data_fixed_json(mbus_data_fixed *data);
 char *mbus_data_error_json(int error);
-char *mbus_frame_data_json(mbus_frame_data *data);
+char *mbus_frame_data_json(mbus_frame_data *data, int options);
 
 char *mbus_data_variable_header_json(mbus_data_variable_header *header);
 
-char *mbus_frame_json(mbus_frame *frame);
+char *mbus_frame_json(mbus_frame *frame, int options);
 
 //
 // InfluxDB Line Protocol generating functions
@@ -606,14 +613,14 @@ char *mbus_frame_json(mbus_frame *frame);
 int   mbus_str_influxdb_encode(unsigned char *dst, const unsigned char *src, size_t max_len);
 int   mbus_str_influxdb_encode_header(unsigned char *dst, const unsigned char *src, size_t max_len);
 char *mbus_data_influxdb(mbus_frame_data *data);
-char *mbus_data_variable_influxdb(mbus_data_variable *data);
+char *mbus_data_variable_influxdb(mbus_data_variable *data, int options);
 char *mbus_data_fixed_influxdb(mbus_data_fixed *data);
 char *mbus_data_error_influxdb(int error);
-char *mbus_frame_data_influxdb(mbus_frame_data *data);
+char *mbus_frame_data_influxdb(mbus_frame_data *data, int options);
 
 char *mbus_data_variable_header_influxdb(mbus_data_variable_header *header);
 
-char *mbus_frame_influxdb(mbus_frame *frame);
+char *mbus_frame_influxdb(mbus_frame *frame, int options);
 
 //
 // Debug/dump

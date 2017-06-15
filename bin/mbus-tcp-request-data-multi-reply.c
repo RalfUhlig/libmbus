@@ -52,11 +52,12 @@ init_slaves(mbus_handle *handle)
 static void
 parse_abort(char **argv)
 {
-    fprintf(stderr, "usage: %s [-d] [-f FRAMES] [-j] host port mbus-address\n", argv[0]);
+    fprintf(stderr, "usage: %s [-d] [-f FRAMES] [-j|-i] [--onlynumval] host port mbus-address\n", argv[0]);
     fprintf(stderr, "    optional flag -d for debug printout\n");
     fprintf(stderr, "    optional flag -f for selecting the maximal number of frames\n");
     fprintf(stderr, "    optional flag -j for json output\n");
     fprintf(stderr, "    optional flag -i for InfluxDb Line Protocol output\n");
+    fprintf(stderr, "    optional flag --onlynumval for supressing records with non-numeric values\n");
     exit(1);
 }
 
@@ -73,7 +74,7 @@ main(int argc, char **argv)
     int address;
     long port;
     int maxframes = MAXFRAMES;
-    int json = 0, influxdb = 0;
+    int json = 0, influxdb = 0, options = 0;
     int c = 0;
 
     memset((void *)&reply, 0, sizeof(mbus_frame));
@@ -99,6 +100,10 @@ main(int argc, char **argv)
             c++;
             maxframes = atoi(argv[c]);
         }
+        else if (strcmp(argv[c], "--onlynumval") == 0)
+        {
+          options = options | MBUS_VALUE_OPTION_ONLYNUMERIC;
+        }
         else
         {
             parse_abort(argv);
@@ -123,7 +128,7 @@ main(int argc, char **argv)
         fprintf(stderr, "Could not initialize M-Bus context: %s\n",  mbus_error_str());
         return 1;
     }
-    
+
     if (debug)
     {
         mbus_register_send_event(handle, &mbus_dump_send_event);
@@ -207,7 +212,7 @@ main(int argc, char **argv)
         //
         // generate InfluxDB Line Protocol and print to standard output
         //
-        if ((result_str = mbus_frame_influxdb(&reply)) == NULL)
+        if ((result_str = mbus_frame_influxdb(&reply, options)) == NULL)
         {
             fprintf(stderr, "Failed to generate InfluxDB Line Protocol representation of MBUS frames: %s\n", mbus_error_str());
             mbus_disconnect(handle);
@@ -224,7 +229,7 @@ main(int argc, char **argv)
         //
         // generate JSON and print to standard output
         //
-        if ((result_str = mbus_frame_json(&reply)) == NULL)
+        if ((result_str = mbus_frame_json(&reply, options)) == NULL)
         {
             fprintf(stderr, "Failed to generate JSON representation of MBUS frames: %s\n", mbus_error_str());
             mbus_disconnect(handle);
@@ -241,7 +246,7 @@ main(int argc, char **argv)
         //
         // generate XML and print to standard output
         //
-        if ((result_str = mbus_frame_xml(&reply)) == NULL)
+        if ((result_str = mbus_frame_xml(&reply, options)) == NULL)
         {
             fprintf(stderr, "Failed to generate XML representation of MBUS frames: %s\n", mbus_error_str());
             mbus_disconnect(handle);

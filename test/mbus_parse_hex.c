@@ -19,7 +19,7 @@ main(int argc, char *argv[])
 {
     FILE *fp = NULL;
     size_t buff_len, len, i;
-    int result, normalized = 0, json = 0, influxdb = 0;
+    int result, normalized = 0, json = 0, influxdb = 0, options = 0;
     unsigned char raw_buff[4096], buff[4096];
     mbus_frame reply;
     mbus_frame_data frame_data;
@@ -41,6 +41,10 @@ main(int argc, char *argv[])
             influxdb = 1;
             json = 0;
         }
+        else if (strcmp(argv[i], "--onlynumval") == 0)
+        {
+          options = options | MBUS_VALUE_OPTION_ONLYNUMERIC;
+        }
         else
         {
             file = argv[i];
@@ -49,10 +53,11 @@ main(int argc, char *argv[])
 
     if (file == NULL) 
     {
-        fprintf(stderr, "usage: %s [-n] [-j|-i] hex-file\n", argv[0]);
+        fprintf(stderr, "usage: %s [-n] [-j|-i] [--onlynumval] hex-file\n", argv[0]);
         fprintf(stderr, "    optional flag -n for normalized values\n");
         fprintf(stderr, "    optional flag -j for result as json string\n");
         fprintf(stderr, "    optional flag -i for result as InfluxDB Line Protocol string\n");
+        fprintf(stderr, "    optional flag --onlynumval for supressing records with non-numeric values\n");
         return 1;
     }
 
@@ -107,7 +112,7 @@ main(int argc, char *argv[])
 
     if (influxdb)
     {
-        result_str = normalized ? mbus_frame_data_influxdb_normalized(&frame_data) : mbus_frame_data_influxdb(&frame_data);
+        result_str = normalized ? mbus_frame_data_influxdb_normalized(&frame_data) : mbus_frame_data_influxdb(&frame_data, options);
 
         if (result_str == NULL)
         {
@@ -119,7 +124,7 @@ main(int argc, char *argv[])
     }
     else if (json)
     {
-        result_str = normalized ? mbus_frame_data_json_normalized(&frame_data) : mbus_frame_data_json(&frame_data);
+        result_str = normalized ? mbus_frame_data_json_normalized(&frame_data) : mbus_frame_data_json(&frame_data, options);
 
         if (result_str == NULL)
         {
@@ -131,7 +136,7 @@ main(int argc, char *argv[])
     }
     else
     {
-        result_str = normalized ? mbus_frame_data_xml_normalized(&frame_data) : mbus_frame_data_xml(&frame_data);
+        result_str = normalized ? mbus_frame_data_xml_normalized(&frame_data) : mbus_frame_data_xml(&frame_data, options);
 
         if (result_str == NULL)
         {
